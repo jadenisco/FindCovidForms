@@ -1,0 +1,4 @@
+# Ignore some local files
+FindForms.dSYM/
+FindForms
+FindForms.exe
