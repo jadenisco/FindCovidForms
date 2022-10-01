@@ -16,7 +16,7 @@ using namespace std;
 
 // Local Definitions, these should go in a header file
 //#define MGH
-//#define CONSOLE_INPUT
+#define CONSOLE_INPUT
 
 #if MGH
 static String vol_root_dir = "//Cifs2/voldept$";
@@ -36,7 +36,9 @@ struct FormInfo {
 };
 
 // Test Values
-static FormInfo formInfo[] = {{"450", "12345678"},
+static FormInfo formInfo[] = {{"350", "6/2/22"},
+                            {"450", "12345678"},
+                            {"john", "11/1/2021"},
                             {"350", "11/35/2021"},
                             {"345", "14/18/2021"},
                             {"100085", "06/00/2021"},
@@ -45,6 +47,41 @@ static FormInfo formInfo[] = {{"450", "12345678"},
                             {"342", "1/9/2022"}
                             };
 static int formInfoIndex = 0;
+
+// GetVol
+// Returns the Volunteer Number.
+// 
+// returns 0, if the function fails
+
+static int GetVol() {
+
+// Keep trying until we get a valid input
+    while(true) {
+        string volAsString;
+        int volNum = 0;
+
+#ifdef CONSOLE_INPUT
+        cout << "\nPlease the volunteer number: "; 
+        cin >> volAsString;
+#else
+        volAsString = formInfo[formInfoIndex].volunteer_number;
+#endif
+        cout << "Vol as String: " << volAsString << "\n";
+
+        try {
+            volNum = stoi(volAsString);
+        }
+        catch(exception &err) {
+            cout << err.what() << "\n";
+            cout << "The volunteer number '" << volAsString << "' is not valid, Please enter a valid number.\n";
+
+            formInfoIndex++;
+            continue;
+        }
+        cout << "Volunteer Number: " << volNum << "\n";
+        return(volNum);
+    }
+}
 
 // GetDate
 // Takes a pointer to a date, returns the date in the date structure.
@@ -55,12 +92,13 @@ static bool GetDate(tm *date) {
 
 // Keep trying until we get a valid input
     while(true) {
-#ifdef CONSOLE_INPUT
         string dateAsString;
+
+#ifdef CONSOLE_INPUT
         cout << "\nPlease enter a date (mm/dd/yy): "; 
         cin >> dateAsString;
 #else
-        string dateAsString = formInfo[formInfoIndex++].dateAsString;
+        dateAsString = formInfo[formInfoIndex].dateAsString;
 #endif
 
         cout << "Date as String: " << dateAsString << "\n";
@@ -68,7 +106,8 @@ static bool GetDate(tm *date) {
         ss >> get_time(date, "%D");
 
         if (ss.fail()) {
-            std::cout << "The date is not valid, Please enter a valid date.\n";
+            std::cout << "The date" << dateAsString << " is not valid, Please enter a valid date.\n";
+            formInfoIndex++;
         }
         else {
             std::cout << put_time(date, "Parsed Date: %D") << '\n';
@@ -83,8 +122,9 @@ static void GetInfo() {
 #ifdef CONSOLE_INPUT
     while(true) {
 #else
-    for(formInfoIndex=0; formInfoIndex < sizeof(formInfo)/sizeof(FormInfo);) {
+    for(formInfoIndex=0; formInfoIndex < sizeof(formInfo)/sizeof(FormInfo); formInfoIndex++) {
 #endif
+ 
         tm date = {};
         if(GetDate(&date)) {
             strftime(sbuf, sizeof(sbuf), "%b", &date);
@@ -97,6 +137,11 @@ static void GetInfo() {
             strftime(sbuf, sizeof(sbuf), "%Y", &date);
             string year(sbuf);
             cout << "YEAR: " << year << "\n";
+        }
+
+        int vol_num = 0;
+        if((vol_num = GetVol()) != 0) {
+            cout << "VOL NUM: " << vol_num << "\n";
         }
     }
 }
