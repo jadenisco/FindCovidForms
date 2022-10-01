@@ -46,35 +46,49 @@ static FormInfo formInfo[] = {{"450", "12345678"},
                             };
 static int formInfoIndex = 0;
 
-// Takes a pointer to a date, the date obtained will be returned in this structure.
+// GetDate
+// Takes a pointer to a date, returns the date in the date structure.
+// 
 // returns false, if the parse failed
+
 static bool GetDate(tm *date) {
-    string dateAsString = formInfo[formInfoIndex++].dateAsString;
 
-    cout << "Date as String: " << dateAsString << "\n";
-    istringstream ss(dateAsString);
-    ss >> get_time(date, "%D");
+// Keep trying until we get a valid input
+    while(true) {
+#ifdef CONSOLE_INPUT
+        string dateAsString;
+        cout << "\nPlease enter a date (mm/dd/yy): "; 
+        cin >> dateAsString;
+#else
+        string dateAsString = formInfo[formInfoIndex++].dateAsString;
+#endif
 
-    if (ss.fail()) {
-        std::cout << "The date is not valid, Please enter a valid date.\n";
-        return(false);
-    }
-    else {
-        std::cout << put_time(date, "Parsed Date: %D") << '\n';
-        return(true);
+        cout << "Date as String: " << dateAsString << "\n";
+        istringstream ss(dateAsString);
+        ss >> get_time(date, "%D");
+
+        if (ss.fail()) {
+            std::cout << "The date is not valid, Please enter a valid date.\n";
+        }
+        else {
+            std::cout << put_time(date, "Parsed Date: %D") << '\n';
+            return(true);
+        }
     }
 }
 
 static void GetInfo() {
     char sbuf[64];
-    string month;
-    string day;
-    
-    for(formInfoIndex=0; formInfoIndex < sizeof(formInfo)/sizeof(FormInfo);) {
-        tm date = {};
 
+#ifdef CONSOLE_INPUT
+    while(true) {
+#else
+    for(formInfoIndex=0; formInfoIndex < sizeof(formInfo)/sizeof(FormInfo);) {
+#endif
+        tm date = {};
         if(GetDate(&date)) {
             strftime(sbuf, sizeof(sbuf), "%b", &date);
+            sbuf[0] = tolower(sbuf[0]);
             string month(sbuf);
             cout << "MONTH: " << month << "\n";
             strftime(sbuf, sizeof(sbuf), "%d", &date);
@@ -88,17 +102,8 @@ static void GetInfo() {
 }
 
 int main(int argc, const char * argv[]) {
-    int x;
 
     GetInfo();
 
-    cout << "Enter a Number: ";
-#ifdef CONSOLE_INPUT
-    cin >> x;
-#else
-    x = 10;
-#endif
-
-    cout << "The number is: " << x << "\n";
     return 0;
 }
