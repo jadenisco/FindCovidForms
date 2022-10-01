@@ -16,7 +16,7 @@ using namespace std;
 
 // Local Definitions, these should go in a header file
 //#define MGH
-#define CONSOLE_INPUT
+//#define CONSOLE_INPUT
 
 #if MGH
 static String vol_root_dir = "//Cifs2/voldept$";
@@ -106,7 +106,7 @@ static bool GetDate(tm *date) {
         ss >> get_time(date, "%D");
 
         if (ss.fail()) {
-            std::cout << "The date" << dateAsString << " is not valid, Please enter a valid date.\n";
+            std::cout << "The date " << dateAsString << " is not valid, Please enter a valid date.\n";
             formInfoIndex++;
         }
         else {
@@ -116,39 +116,39 @@ static bool GetDate(tm *date) {
     }
 }
 
-static void GetInfo() {
+static void GetInfo(tm *date, int *volNum) {
     char sbuf[64];
+
+    if(GetDate(date)) {
+        strftime(sbuf, sizeof(sbuf), "%b", date);
+        sbuf[0] = tolower(sbuf[0]);
+        string month(sbuf);
+        cout << "MONTH: " << month << "\n";
+        strftime(sbuf, sizeof(sbuf), "%d", date);
+        string day(sbuf);
+        cout << "DAY: " << day << "\n";
+        strftime(sbuf, sizeof(sbuf), "%Y", date);
+        string year(sbuf);
+        cout << "YEAR: " << year << "\n";
+    }
+
+    if((*volNum = GetVol()) != 0) {
+        cout << "VOL NUM: " << *volNum << "\n";
+    }
+}
+
+int main(int argc, const char * argv[]) {
 
 #ifdef CONSOLE_INPUT
     while(true) {
 #else
     for(formInfoIndex=0; formInfoIndex < sizeof(formInfo)/sizeof(FormInfo); formInfoIndex++) {
 #endif
- 
         tm date = {};
-        if(GetDate(&date)) {
-            strftime(sbuf, sizeof(sbuf), "%b", &date);
-            sbuf[0] = tolower(sbuf[0]);
-            string month(sbuf);
-            cout << "MONTH: " << month << "\n";
-            strftime(sbuf, sizeof(sbuf), "%d", &date);
-            string day(sbuf);
-            cout << "DAY: " << day << "\n";
-            strftime(sbuf, sizeof(sbuf), "%Y", &date);
-            string year(sbuf);
-            cout << "YEAR: " << year << "\n";
-        }
+        int volNum = 0;
 
-        int vol_num = 0;
-        if((vol_num = GetVol()) != 0) {
-            cout << "VOL NUM: " << vol_num << "\n";
-        }
+        GetInfo(&date, &volNum);
     }
-}
-
-int main(int argc, const char * argv[]) {
-
-    GetInfo();
 
     return 0;
 }
