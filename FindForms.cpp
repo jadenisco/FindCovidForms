@@ -7,11 +7,11 @@
 //
 
 #include <iostream>
-#include <string>
 #include <sstream>
 #include <iomanip>
-#include <stdio.h>
+#include <filesystem>
 
+namespace fs = std::filesystem;
 using namespace std;
 
 // Local Definitions, these should go in a header file
@@ -30,22 +30,29 @@ static string adult_volunteer_root_dir = vol_root_dir + "/.Volunteer Files/ADULT
 static string junior_volunteer_root_dir = vol_root_dir + "/.Volunteer Files/JUNIOR MEDICAL AND NONMEDICAL/Active JR Volunteers";
 static string path = adult_volunteer_root_dir;
 
-struct FormInfo {
+typedef struct FormInfo {
     string volunteer_number;
     string dateAsString;
-};
+} FormInfoDef;
+
+typedef struct VolMonDayYear {
+    string volNum;
+    string month;
+    string day;
+    string year;
+} VolMonDayYearDef;
 
 // Test Values
-static FormInfo formInfo[] = {{"350", "6/2/22"},
-                            {"450", "12345678"},
-                            {"john", "11/1/2021"},
-                            {"350", "11/35/2021"},
-                            {"345", "14/18/2021"},
-                            {"100085", "06/00/2021"},
-                            {"123", "04/11"},
-                            {"0725", "6/11/2022"},
-                            {"342", "1/9/2022"}
-                            };
+static FormInfo formInfo[] = {{"350", "6/10/21"}};
+////                            {"450", "12345678"},
+////                            {"john", "11/1/2021"},
+////                            {"350", "11/35/2021"},
+////                            {"345", "14/18/2021"},
+////                            {"100085", "06/00/2021"},
+////                            {"123", "04/11"},
+////                            {"0725", "6/11/2022"},
+////                            {"342", "1/9/2022"}
+////                            };
 static int formInfoIndex = 0;
 
 // GetVol
@@ -53,12 +60,13 @@ static int formInfoIndex = 0;
 // 
 // returns 0, if the function fails
 
-static int GetVol() {
+static int GetVol(VolMonDayYear *volMonDayYear) {
 
 // Keep trying until we get a valid input
     while(true) {
-        string volAsString;
         int volNum = 0;
+        string volAsString;
+        char sbuf[64];
 
 #ifdef CONSOLE_INPUT
         cout << "\nPlease the volunteer number: "; 
@@ -78,6 +86,8 @@ static int GetVol() {
             formInfoIndex++;
             continue;
         }
+
+        volMonDayYear->volNum = volAsString;
         cout << "Volunteer Number: " << volNum << "\n";
         return(volNum);
     }
@@ -106,36 +116,54 @@ static bool GetDate(tm *date) {
         ss >> get_time(date, "%D");
 
         if (ss.fail()) {
-            std::cout << "The date " << dateAsString << " is not valid, Please enter a valid date.\n";
+            cout << "The date " << dateAsString << " is not valid, Please enter a valid date.\n";
             formInfoIndex++;
         }
         else {
-            std::cout << put_time(date, "Parsed Date: %D") << '\n';
+            cout << put_time(date, "Parsed Date: %D") << '\n';
             return(true);
         }
     }
 }
 
-static void GetInfo(tm *date, int *volNum) {
+static void GetInfo(VolMonDayYear *volMonDayYear) {
+    tm date = {};
     char sbuf[64];
+    int volNum = 0;
 
-    if(GetDate(date)) {
-        strftime(sbuf, sizeof(sbuf), "%b", date);
-        sbuf[0] = tolower(sbuf[0]);
-        string month(sbuf);
-        cout << "MONTH: " << month << "\n";
-        strftime(sbuf, sizeof(sbuf), "%d", date);
-        string day(sbuf);
-        cout << "DAY: " << day << "\n";
-        strftime(sbuf, sizeof(sbuf), "%Y", date);
-        string year(sbuf);
-        cout << "YEAR: " << year << "\n";
+    if(GetDate(&date)) {
+        strftime(sbuf, sizeof(sbuf), "%b", &date);
+        volMonDayYear->month = string(sbuf);
+        volMonDayYear->month[0] = tolower(volMonDayYear->month[0]);
+        cout << "MONTH: " << volMonDayYear->month << "\n";
+        strftime(sbuf, sizeof(sbuf), "%d", &date);
+        volMonDayYear->day = string(sbuf);
+        cout << "DAY: " << volMonDayYear->day << "\n";
+        strftime(sbuf, sizeof(volMonDayYear->year), "%Y", &date);
+        volMonDayYear->year = string(sbuf);
+        cout << "YEAR: " << volMonDayYear->year << "\n";
     }
 
-    if((*volNum = GetVol()) != 0) {
-        cout << "VOL NUM: " << *volNum << "\n";
+    if((volNum = GetVol(volMonDayYear)) != 0) {
+        cout << "VOL NUM: " << volMonDayYear->volNum << "\n";
     }
 }
+
+static void ParseDir(const fs::path& pathToScan, int level = 0) {
+
+    for(const auto& entry : fs::directory_iterator(pathToScan)) {
+        cout << "L: " << level << setw(1) << "";
+        const auto filenameStr = entry.path().filename().string();
+        if (entry.is_directory()) {
+            cout << setw(level * 3) << "" << "D: " << filenameStr << "\n";
+            ParseDir(entry, level +1 );
+        } else if ( entry.is_regular_file()) {
+            cout << setw(level * 3) << "" << "F: " << filenameStr << "\n";
+        } else {
+            cout << setw(level * 3) << "" << " [?]" << filenameStr << "\n"; 
+        }
+    }
+} 
 
 int main(int argc, const char * argv[]) {
 
@@ -144,10 +172,10 @@ int main(int argc, const char * argv[]) {
 #else
     for(formInfoIndex=0; formInfoIndex < sizeof(formInfo)/sizeof(FormInfo); formInfoIndex++) {
 #endif
-        tm date = {};
-        int volNum = 0;
+        VolMonDayYear volMonDayYear;
 
-        GetInfo(&date, &volNum);
+        GetInfo(&volMonDayYear);
+        ParseDir(adult_volunteer_root_dir);
     }
 
     return 0;
