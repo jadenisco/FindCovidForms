@@ -17,7 +17,7 @@ using namespace std;
 
 // Local Definitions, these should go in a header file
 #define MGH
-#define CONSOLE_INPUT
+//#define CONSOLE_INPUT
 
 #ifdef MGH
 static string vol_root_dir = "//Cifs2/voldept$";
@@ -186,7 +186,7 @@ static void ParseDir(const fs::path& pathToScan, VolMonDayYear *volMonDayYear, i
         } else if (level > 0) {
             cout << setw(level * 2) << "" << filenameStr << "\n";
         } else {
-            cout << ".";
+            cout << "";
         }
     }
 } 
